@@ -15,53 +15,42 @@ class Order {
     get getItems() {return this.items}
 
     addItem(itemInstance, number = 1) {
-        // {
-        // 'small hamburger': {name:.., price:..., calories:...}
-        // 'number': x
-        // }
-
-        let newItem = {}
+        let newItem = {number: 0}
         if (this.mutable === true) {
-            newItem[itemInstance.name] = itemInstance
+            // newItem[itemInstance.name] = {}
+            Object.assign(newItem, itemInstance)
             newItem.number = number
             this.items = this.items.concat(newItem)
             this.price += itemInstance.getPrice * number
-            // console.log(this.price)
             this.calories += itemInstance.getCalories * number
-            // console.log(this.calories)
-        }
-        else {
+        } else {
             console.log("Sorry, you've already paid")
         }
     }
 
     deleteItem(itemName, number = 1) {
+        let isItemNameExist = false
         if (this.mutable === true) {
-            this.items = this.items.filter(item => {
-                if (item.hasOwnProperty(itemName)) {
-                    if (item.number < number) {
+            for (let i = 0; i < this.items.length; i++) {
+                if (this.items[i].name === itemName) {
+                    isItemNameExist = true
+                    if (this.items[i].number >= number) {
+                        this.items[i].number -= number
+                        this.price -= this.items[i].price * number
+                        this.calories -= this.items[i].calories * number
+                    } else {
                         console.log(`Oops, you don't have so many ${itemName}`)
-                        return false
-                    }
-                    else {
-                        this.price -= item.getPrice * number
-                        this.calories -= item.getCalories * number
-                        if (item.number === number) {
-                            return true
-                        }
-                        else {
-                            item.number -= number
-                            return false
-                        }
                     }
                 }
-                else {
-                    console.log(`Oops, you don't have ${itemName} in your order`)
-                    return false
-                }
-            })
-        }
-        else {
+            }
+            if (isItemNameExist) {
+                this.items = this.items.filter((item) => {
+                    return !(item.name === itemName && item.number === 0)
+                })
+            } else {
+                console.log(`Sorry, you don't have ${itemName} in your order`)
+            }
+        } else {
             console.log("Sorry, you've already paid")
         }
     }
@@ -73,8 +62,7 @@ class Order {
     pay() {
         if (this.mutable === false) {
             console.log("Sorry, you've already paid")
-        }
-        else {
+        } else {
             console.log(`your wallet will lose: ${this.price} tug\nyou will gain: ${this.calories} calories\n`)
             this.mutable = false
         }
@@ -202,6 +190,8 @@ myOrder.addItem(salad1)
 myOrder.addItem(cola1, 3)
 myOrder.addItem(coffee1, 3)
 myOrder.showOrder()
+myOrder.deleteItem('Cola', 2)
+myOrder.deleteItem('Caesar Salad')
 myOrder.pay()
 myOrder.addItem(coffee2, 3)
 myOrder.showOrder()
