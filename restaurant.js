@@ -15,37 +15,51 @@ class Order {
     get getItems() {return this.items}
 
     addItem(itemInstance, number = 1) {
-        let item = {}
-        item[itemInstance.name] = itemInstance
-        item.number = number
+        // {
+        // 'small hamburger': {name:.., price:..., calories:...}
+        // 'number': x
+        // }
+
+        let newItem = {}
         if (this.mutable === true) {
-            this.items = this.items.concat(item)
+            newItem[itemInstance.name] = itemInstance
+            newItem.number = number
+            this.items = this.items.concat(newItem)
             this.price += itemInstance.getPrice * number
-            console.log(this.price)
+            // console.log(this.price)
             this.calories += itemInstance.getCalories * number
-            console.log(this.calories)
+            // console.log(this.calories)
         }
         else {
             console.log("Sorry, you've already paid")
         }
     }
 
-    // DELETE METHOD DOESN'T WORK PROPERLY YET
     deleteItem(itemName, number = 1) {
         if (this.mutable === true) {
-            for (let i = 0; i < this.items.length; i++) {
-                if (this.items[i].hasOwnProperty(itemName)) {
-                    if (this.items[i].number >= number) {
-                        this.price -= this.items[i].getPrice * number
-                        this.calories -= this.items[i].getCalories * number
-                        this.items[i].number -= number
-                    } else {
+            this.items = this.items.filter(item => {
+                if (item.hasOwnProperty(itemName)) {
+                    if (item.number < number) {
                         console.log(`Oops, you don't have so many ${itemName}`)
+                        return false
                     }
-                } else {
-                    console.log(`Oops, you don't have ${itemName} in your order`)
+                    else {
+                        this.price -= item.getPrice * number
+                        this.calories -= item.getCalories * number
+                        if (item.number === number) {
+                            return true
+                        }
+                        else {
+                            item.number -= number
+                            return false
+                        }
+                    }
                 }
-            }
+                else {
+                    console.log(`Oops, you don't have ${itemName} in your order`)
+                    return false
+                }
+            })
         }
         else {
             console.log("Sorry, you've already paid")
@@ -57,8 +71,13 @@ class Order {
     }
 
     pay() {
-        this.mutable = false
-        console.log(`your wallet will lose: ${this.price} tug\nyou will gain: ${this.calories} calories`)
+        if (this.mutable === false) {
+            console.log("Sorry, you've already paid")
+        }
+        else {
+            console.log(`your wallet will lose: ${this.price} tug\nyou will gain: ${this.calories} calories\n`)
+            this.mutable = false
+        }
     }
 }
 
@@ -77,48 +96,70 @@ class MenuItem {
 }
 
 class Hamburger extends MenuItem{
-    static SIZE_SMALL = [50, 20, 'small hamburger']
-    static SIZE_LARGE = [100, 40, 'large hamburger']
-    static STUFFING_CHEESE = [10, 20, 'cheese']
-    static STUFFING_SALAD = [20, 5, 'salad']
-    static STUFFING_POTATO = [15, 10, 'potato']
+    static SIZE_SMALL = {
+        name: 'small hamburger',
+        price: 100,
+        calories: 40
+    }
+    static SIZE_LARGE = {
+        name: 'large hamburger',
+        price: 100,
+        calories: 40
+    }
+    static STUFFING_CHEESE = {
+        name: 'with cheese',
+        price: 10,
+        calories: 20
+    }
+    static STUFFING_SALAD = {
+        name: 'with salad',
+        price: 20,
+        calories: 5
+    }
+    static STUFFING_POTATO = {
+        name: 'with potato',
+        price: 15,
+        calories: 10
+    }
 
-    size
     stuffing = []
-    constructor(size, stuffing, ...args) {
-        let name = size[2]
-        // calculate the final parameters
-        let price = size[0] + stuffing[0]
-        let calories = size[1] + stuffing[1]
+    constructor(type, stuffing, ...args) {
+        let name_and_size = type.name
+        let price = type.price + stuffing.price
+        let calories = type.calories + stuffing.calories
         for (let i = 0; i < args.length; i++) {
-            price += args[i][0]
-            calories += args[i][1]
+            price += args[i].price
+            calories += args[i].calories
         }
-        super(name, price, calories)
+        super(name_and_size, price, calories)
 
         // make one array of stuffings
-        let allStuffings = this.stuffing.concat(stuffing[2])
+        let allStuffing = this.stuffing.concat(stuffing.name)
         for (let i = 0; i < args.length; i++) {
-            allStuffings = allStuffings.concat(args[i][2])
+            allStuffing = allStuffing.concat(args[i].name)
         }
-
-        this.size = size[2]
-        this.stuffing = allStuffings
+        this.stuffing = allStuffing
     }
-    get getSize() {return this.size}
+
     get getStuffing() {return this.stuffing}
 }
 
 class Salad extends MenuItem {
-    static CAESAR = [100, 20, 'Caesar']
-    static OLIVIER = [50, 80, 'Olivier']
+    static CAESAR = {
+        name: 'Caesar Salad',
+        price: 100,
+        calories: 20
+    }
+    static OLIVIER = {
+        name: 'Olivier Salad',
+        price: 50,
+        calories: 80
+    }
 
-    weight
     constructor(type, weight) {
-        let name = type[2]
-        // calculate the final parameters
-        let price = type[0] * weight / 100
-        let calories = type[1] * weight / 100
+        let name = type.name
+        let price = type.price * weight / 100
+        let calories = type.calories * weight / 100
 
         super(name, price, calories)
         this.weight = weight
@@ -126,13 +167,21 @@ class Salad extends MenuItem {
 }
 
 class Drink extends MenuItem{
-    static COLA = [50, 40, 'Cola']
-    static COFFEE = [80, 20, 'Coffee']
+    static COLA = {
+        name: 'Cola',
+        price: 50,
+        calories: 40
+    }
+    static COFFEE = {
+        name: 'Coffee',
+        price: 80,
+        calories: 20
+    }
 
     constructor(type) {
-        let name = type[2]
-        let price = type[0]
-        let calories = type[1]
+        let name = type.name
+        let price = type.price
+        let calories = type.calories
         super(name, price, calories)
     }
 }
@@ -155,3 +204,4 @@ myOrder.addItem(coffee1, 3)
 myOrder.showOrder()
 myOrder.pay()
 myOrder.addItem(coffee2, 3)
+myOrder.showOrder()
